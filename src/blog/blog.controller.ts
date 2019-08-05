@@ -1,35 +1,57 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Logger, Param, Post, Put } from '@nestjs/common';
+import { BlogService } from './blog.service';
+import { ArticleDto } from '../dtos/article.dto';
 
 @Controller('blog')
 export class BlogController {
 
+  constructor(
+    private readonly blogService: BlogService,
+  ) {}
+
   @Get()
   getAll() {
     Logger.log('Get all articles', 'BlogController');
-    return 'Get all articles';
+    return this.blogService.findAllArticles();
   }
 
   @Get(':articleId')
-  getOne(@Param('articleId') articleId) {
+  async getOne(@Param('articleId') articleId) {
     Logger.log('Get one article', 'BlogController');
-    return 'Get one article id ' + articleId;
+    const article = await this.blogService.findOneArticles(articleId);
+    if (article) {
+      return article;
+    }
+    throw new HttpException('Article not found', HttpStatus.NOT_FOUND);
   }
 
   @Post()
-  create(@Body() articleDto) {
+  async create(@Body() articleDto: ArticleDto) {
     Logger.log('Create an article', 'BlogController');
-    return 'Created article';
+    const article = await this.blogService.saveArticles(articleDto);
+    if (article) {
+      return article;
+    }
+    throw new HttpException('Not created', HttpStatus.NOT_MODIFIED);
   }
 
   @Put(':articleId')
-  update(@Param('articleId') articleId, @Body() articleDto) {
+  async update(@Param('articleId') articleId, @Body() articleDto) {
     Logger.log('Updated article', 'BlogController');
-    return 'Updated article';
+    const article = await this.blogService.updateArticles(articleId, articleDto);
+    if (article) {
+      return article;
+    }
+    throw new HttpException('Article not updated', HttpStatus.NOT_MODIFIED);
   }
 
   @Delete(':articleId')
-  remove(@Param('articleId') articleId) {
+  async remove(@Param('articleId') articleId) {
     Logger.log('Deleted article', 'BlogController');
-    return 'Deleted article id ' + articleId;
+    const article = await this.blogService.removeArticles(articleId);
+    if (article) {
+      return article;
+    }
+    throw new HttpException('Article not found', HttpStatus.NOT_FOUND);
   }
 }
